@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gestão de Estoque - Amarte</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <h1>Gestão de Estoque - Amarte</h1>
+
+    <!-- Formulário para Adicionar Itens ao Estoque -->
+    <div class="section">
+      <h2>Adicionar Item ao Estoque</h2>
+      <form id="form-adicionar-item">
+        <label for="descricao">Descrição:</label>
+        <input type="text" id="descricao" required />
+        <br />
+        <label for="quantidade">Quantidade:</label>
+        <input type="number" id="quantidade" required />
+        <br />
+        <label for="valorCusto">Valor de Custo:</label>
+        <input type="number" id="valorCusto" step="0.01" required />
+        <br />
+        <label for="margemLucro">Margem de Lucro (%):</label>
+        <input type="number" id="margemLucro" step="0.01" required />
+        <br />
+        <button type="submit">Adicionar Item</button>
+      </form>
+    </div>
+
+    <!-- Seção para Mostrar Itens em Estoque -->
+    <div class="section">
+      <h2>Itens Disponíveis em Estoque</h2>
+      <ul id="estoque-lista"></ul>
+    </div>
+
+    <!-- Seção para Registrar Vendas -->
+    <div class="section">
+      <h2>Registrar Venda</h2>
+      <form id="form-registrar-venda">
+        <label for="itemVenda">Item:</label>
+        <select id="itemVenda" required></select>
+        <br />
+        <label for="quantidadeVenda">Quantidade:</label>
+        <input type="number" id="quantidadeVenda" required />
+        <br />
+        <label for="cliente">Nome do Cliente:</label>
+        <input type="text" id="cliente" required />
+        <br />
+        <button type="submit">Registrar Venda</button>
+      </form>
+    </div>
+
+    <!-- Seção para Mostrar Vendas Registradas -->
+    <div class="section">
+      <h2>Vendas Registradas</h2>
+      <ul id="vendas-lista"></ul>
+    </div>
+
+    <!-- Seção para Mostrar Saldos -->
+    <div class="section">
+      <h2>Saldos</h2>
+      <p id="saldo-estoque">Saldo de Estoque: R$ 0.00</p>
+      <p id="saldo-vendas">Saldo de Vendas (Lucro Real): R$ 0.00</p>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>
