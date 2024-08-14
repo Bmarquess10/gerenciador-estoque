@@ -9,18 +9,16 @@ document
     let descricao = document.getElementById("descricao").value;
     let quantidade = parseInt(document.getElementById("quantidade").value);
     let valorCusto = parseFloat(document.getElementById("valorCusto").value);
-    let margemLucro = parseFloat(document.getElementById("margemLucro").value);
+    let valorVenda = parseFloat(document.getElementById("valorVenda").value);
 
-    let valorVenda = parseFloat(
-      (valorCusto * (1 + margemLucro / 100)).toFixed(2)
-    );
+    let margemLucro = ((valorVenda - valorCusto) / valorCusto) * 100;
 
     let itemExistente = estoque.find((item) => item.descricao === descricao);
     if (itemExistente) {
       itemExistente.quantidade += quantidade;
       itemExistente.valorCusto = valorCusto;
-      itemExistente.margemLucro = margemLucro;
       itemExistente.valorVenda = valorVenda;
+      itemExistente.margemLucro = margemLucro;
     } else {
       estoque.push({
         descricao,
@@ -49,9 +47,9 @@ function atualizarListaEstoque() {
       item.quantidade
     } - Valor de Custo: R$ ${item.valorCusto.toFixed(
       2
-    )} - Valor de Venda: R$ ${item.valorVenda.toFixed(2)} - Margem de Lucro: ${
-      item.margemLucro
-    }%
+    )} - Valor de Venda: R$ ${item.valorVenda.toFixed(
+      2
+    )} - Margem de Lucro: ${item.margemLucro.toFixed(2)}%
             <button onclick="editarItem(${index})">Editar</button>
             <button onclick="excluirItem(${index})">Excluir</button>
         `;
@@ -80,26 +78,28 @@ function editarItem(index) {
     "Digite o novo valor de custo",
     estoque[index].valorCusto
   );
-  let novaMargemLucro = prompt(
-    "Digite a nova margem de lucro (%)",
-    estoque[index].margemLucro
+  let novoValorVenda = prompt(
+    "Digite o novo valor de venda",
+    estoque[index].valorVenda
   );
 
   if (
     novaDescricao !== null &&
     novaQuantidade !== null &&
     novoValorCusto !== null &&
-    novaMargemLucro !== null &&
+    novoValorVenda !== null &&
     !isNaN(novaQuantidade) &&
     !isNaN(novoValorCusto) &&
-    !isNaN(novaMargemLucro)
+    !isNaN(novoValorVenda)
   ) {
     estoque[index].descricao = novaDescricao;
     estoque[index].quantidade = parseInt(novaQuantidade);
     estoque[index].valorCusto = parseFloat(novoValorCusto);
-    estoque[index].margemLucro = parseFloat(novaMargemLucro);
-    estoque[index].valorVenda =
-      estoque[index].valorCusto * (1 + estoque[index].margemLucro / 100);
+    estoque[index].valorVenda = parseFloat(novoValorVenda);
+    estoque[index].margemLucro =
+      ((estoque[index].valorVenda - estoque[index].valorCusto) /
+        estoque[index].valorCusto) *
+      100;
 
     salvarEstoque();
     atualizarListaEstoque();
@@ -108,16 +108,29 @@ function editarItem(index) {
   }
 }
 
-function excluirItem(index) {
-  if (
-    confirm(
-      `Tem certeza que deseja excluir o item "${estoque[index].descricao}"?`
-    )
-  ) {
-    estoque.splice(index, 1);
-    salvarEstoque();
+function salvarEstoque() {
+  localStorage.setItem("estoque", JSON.stringify(estoque));
+}
+
+function salvarVendas() {
+  localStorage.setItem("vendas", JSON.stringify(vendas));
+}
+
+function carregarEstoque() {
+  const estoqueSalvo = JSON.parse(localStorage.getItem("estoque"));
+  if (estoqueSalvo) {
+    estoque = estoqueSalvo;
     atualizarListaEstoque();
     atualizarOpcoesVenda();
+    atualizarSaldos();
+  }
+}
+
+function carregarVendas() {
+  const vendasSalvas = JSON.parse(localStorage.getItem("vendas"));
+  if (vendasSalvas) {
+    vendas = vendasSalvas;
+    atualizarListaVendas();
     atualizarSaldos();
   }
 }
@@ -151,29 +164,25 @@ document
 
     let item = estoque.find((i) => i.descricao === itemDescricao);
 
-    if (item && quantidadeVenda <= item.quantidade) {
-      let valorVendaTotal = quantidadeVenda * item.valorVenda;
-      let data = new Date().toLocaleString();
-
-      vendas.push({
-        data,
-        item: item.descricao,
-        quantidade: quantidadeVenda,
-        valorVenda: valorVendaTotal,
-        cliente,
-      });
-
+    if (item && quantidadeVenda > 0 && quantidadeVenda <= item.quantidade) {
       item.quantidade -= quantidadeVenda;
+      vendas.push({
+        descricao: item.descricao,
+        quantidade: quantidadeVenda,
+        valorVenda: item.valorVenda,
+        cliente,
+        data: new Date().toLocaleDateString(),
+      });
 
       salvarEstoque();
       salvarVendas();
       atualizarListaEstoque();
-      atualizarOpcoesVenda();
       atualizarListaVendas();
+      atualizarOpcoesVenda();
       atualizarSaldos();
       document.getElementById("form-registrar-venda").reset();
     } else {
-      alert("Quantidade indisponível no estoque.");
+      alert("Quantidade de venda inválida!");
     }
   });
 
@@ -184,85 +193,42 @@ function atualizarListaVendas() {
   vendas.forEach((venda, index) => {
     const li = document.createElement("li");
     li.innerHTML = `
-            Data: ${venda.data} - Item: ${venda.item} - Quantidade: ${
+            Data: ${venda.data} - Descrição: ${venda.descricao} - Quantidade: ${
       venda.quantidade
     } - Valor de Venda: R$ ${venda.valorVenda.toFixed(2)} - Cliente: ${
       venda.cliente
     }
-            <button onclick="editarVenda(${index})">Editar</button>
             <button onclick="excluirVenda(${index})">Excluir</button>
         `;
+
     listaVendas.appendChild(li);
   });
 }
 
-function editarVenda(index) {
-  let novaQuantidade = prompt(
-    "Digite a nova quantidade",
-    vendas[index].quantidade
-  );
-  let novoCliente = prompt("Digite o nome do cliente", vendas[index].cliente);
-
-  if (
-    novaQuantidade !== null &&
-    !isNaN(novaQuantidade) &&
-    novoCliente !== null
-  ) {
-    novaQuantidade = parseInt(novaQuantidade);
-
-    let vendaOriginal = vendas[index];
-    let item = estoque.find((i) => i.descricao === vendaOriginal.item);
-
-    if (item) {
-      // Reverter a quantidade original ao estoque
-      item.quantidade += vendaOriginal.quantidade;
-
-      // Atualizar a venda
-      vendas[index].quantidade = novaQuantidade;
-      vendas[index].cliente = novoCliente;
-      vendas[index].valorVenda = novaQuantidade * item.valorVenda;
-
-      // Atualizar o estoque com a nova quantidade vendida
-      item.quantidade -= novaQuantidade;
-
-      salvarEstoque();
-      salvarVendas();
-      atualizarListaEstoque();
-      atualizarListaVendas();
-      atualizarOpcoesVenda();
-      atualizarSaldos();
-    }
-  }
+function excluirItem(index) {
+  estoque.splice(index, 1);
+  salvarEstoque();
+  atualizarListaEstoque();
+  atualizarOpcoesVenda();
+  atualizarSaldos();
 }
 
 function excluirVenda(index) {
-  if (confirm("Tem certeza que deseja excluir esta venda?")) {
-    let vendaExcluida = vendas.splice(index, 1)[0];
-    let item = estoque.find((i) => i.descricao === vendaExcluida.item);
-
-    if (item) {
-      item.quantidade += vendaExcluida.quantidade;
-
-      salvarEstoque();
-      salvarVendas();
-      atualizarListaEstoque();
-      atualizarListaVendas();
-      atualizarOpcoesVenda();
-      atualizarSaldos();
-    }
-  }
+  vendas.splice(index, 1);
+  salvarVendas();
+  atualizarListaVendas();
+  atualizarSaldos();
 }
 
 function atualizarSaldos() {
   let saldoEstoque = estoque.reduce(
-    (total, item) => total + item.valorCusto * item.quantidade,
+    (total, item) => total + item.quantidade * (item.valorCusto || 0),
     0
   );
+
   let saldoVendas = vendas.reduce((total, venda) => {
-    let item = estoque.find((i) => i.descricao === venda.item);
-    let lucroVenda =
-      venda.valorVenda - (item ? item.valorCusto * venda.quantidade : 0);
-    return total + lucroVenda;
+    let lucroPorItem = (venda.valorVenda || 0) - (venda.valorCusto || 0);
+    return total + venda.quantidade * lucroPorItem;
   }, 0);
 
   document.getElementById(
@@ -273,33 +239,23 @@ function atualizarSaldos() {
   ).textContent = `Saldo de Vendas (Lucro Real): R$ ${saldoVendas.toFixed(2)}`;
 }
 
-function salvarEstoque() {
-  localStorage.setItem("estoque", JSON.stringify(estoque));
-}
-
-function salvarVendas() {
-  localStorage.setItem("vendas", JSON.stringify(vendas));
-}
-
-function carregarEstoque() {
-  const estoqueSalvo = JSON.parse(localStorage.getItem("estoque"));
-  if (estoqueSalvo) {
-    estoque = estoqueSalvo;
-    atualizarListaEstoque();
-    atualizarOpcoesVenda();
-    atualizarSaldos();
+function openTab(event, tabName) {
+  let tabContent = document.getElementsByClassName("tab-content");
+  for (let i = 0; i < tabContent.length; i++) {
+    tabContent[i].style.display = "none";
   }
-}
 
-function carregarVendas() {
-  const vendasSalvas = JSON.parse(localStorage.getItem("vendas"));
-  if (vendasSalvas) {
-    vendas = vendasSalvas;
-    atualizarListaVendas();
-    atualizarSaldos();
+  let tabButtons = document.getElementsByClassName("tab-button");
+  for (let i = 0; i < tabButtons.length; i++) {
+    tabButtons[i].className = tabButtons[i].className.replace(" active", "");
   }
+
+  document.getElementById(tabName).style.display = "block";
+  event.currentTarget.className += " active";
 }
 
-// Carregar dados salvos ao iniciar
-carregarEstoque();
-carregarVendas();
+window.onload = function () {
+  carregarEstoque();
+  carregarVendas();
+  openTab({ currentTarget: document.querySelector(".tab-button") }, "estoque");
+};

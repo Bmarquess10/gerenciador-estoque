@@ -98,6 +98,39 @@ li button:nth-child(2):hover {
   background-color: #c82333;
 }
 
+/* Estilo para as abas */
+.tabs {
+  display: flex;
+  margin-bottom: 20px;
+}
+
+.tab-button {
+  padding: 10px 20px;
+  border: none;
+  background-color: #28a745;
+  color: white;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  border-radius: 4px 4px 0 0;
+  margin-right: 2px;
+}
+
+.tab-button:hover {
+  background-color: #218838;
+}
+
+.tab-button.active {
+  background-color: #218838;
+}
+
+.tab-content {
+  display: none;
+}
+
+.tab-content.active {
+  display: block;
+}
+
 /* Responsividade */
 
 /* Para telas menores que 768px (dispositivos móveis) */
