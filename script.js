@@ -227,7 +227,15 @@ function atualizarSaldos() {
   );
 
   let saldoVendas = vendas.reduce((total, venda) => {
-    let lucroPorItem = (venda.valorVenda || 0) - (venda.valorCusto || 0);
+    // Encontre o item correspondente no estoque para obter o valor de custo
+    let itemEstoque = estoque.find(
+      (item) => item.descricao === venda.descricao
+    );
+    let valorCusto = itemEstoque ? itemEstoque.valorCusto : 0;
+    let lucroPorItem = (venda.valorVenda || 0) - valorCusto;
+    console.log(
+      `Venda: ${venda.valorVenda}, Custo: ${valorCusto}, Lucro: ${lucroPorItem}`
+    );
     return total + venda.quantidade * lucroPorItem;
   }, 0);
 
